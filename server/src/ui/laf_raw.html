@@ -1,0 +1,502 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laf Cloud Function Editor Clone</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+    
+
+    <!-- <script src="https://unpkg.com/@phosphor-icons/web"></script> -->
+    <!-- Phosphor Icons
+    ["regular", "thin", "light", "bold", "fill", "duotone"] 
+    -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/thin/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/light/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/duotone/style.css" />
+
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00bfa5', /* Laf Green/Teal */
+                        primaryHover: '#008f7a',
+                        sidebarBg: '#ffffff',
+                        borderCol: '#e5e7eb',
+                        textMain: '#374151',
+                        textLight: '#9ca3af',
+                        codeBg: '#ffffff',
+                        codeString: '#059669',
+                        codeKeyword: '#2563eb',
+                        codeFunc: '#d97706',
+                    },
+                    fontSize: {
+                        'xxs': '0.65rem',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* Editor Styles */
+        .code-editor-container {
+            position: relative;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .line-numbers {
+            text-align: right;
+            color: #9ca3af;
+            user-select: none;
+            padding-right: 12px;
+            border-right: 1px solid #f3f4f6;
+        }
+
+        textarea.code-area {
+            background: transparent;
+            color: #1f2937;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+            tab-size: 2;
+        }
+
+        /* Syntax Highlight Simulation (Simple) */
+        .highlight-keyword { color: #2563eb; }
+        .highlight-string { color: #059669; }
+        .highlight-func { color: #d97706; }
+    </style>
+</head>
+<body class="bg-white h-screen w-screen flex overflow-hidden text-sm text-gray-700 selection:bg-teal-100">
+
+    <!-- 1. Left Icon Sidebar -->
+    <nav class="w-12 border-r border-borderCol flex flex-col items-center py-4 bg-gray-50 z-20 flex-shrink-0">
+        <!-- Logo Area -->
+        <div class="mb-6 cursor-pointer">
+            <div class="w-7 h-7 bg-transparent flex items-center justify-center">
+                <!-- Simple Logo Icon -->
+                <svg viewBox="0 0 24 24" class="w-6 h-6 text-primary fill-current">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/>
+                </svg>
+            </div>
+            <div class="text-[10px] text-center mt-1 text-gray-500 scale-90">Singapore</div>
+        </div>
+
+        <!-- Menu Items -->
+        <div class="flex flex-col gap-6 w-full">
+            <div class="nav-item group cursor-pointer flex flex-col items-center gap-1 relative text-primary">
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary rounded-r"></div>
+                <i class="ph ph-function text-2xl group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">函数</span>
+            </div>
+            <div class="nav-item group cursor-pointer flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
+                <i class="ph ph-database text-2xl group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px]">集合</span>
+            </div>
+            <div class="nav-item group cursor-pointer flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
+                <i class="ph ph-files text-2xl group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px]">存储</span>
+            </div>
+        </div>
+
+        <!-- Bottom Settings -->
+        <div class="mt-auto mb-2 cursor-pointer text-gray-400 hover:text-gray-600">
+            <i class="ph ph-gear text-2xl"></i>
+        </div>
+    </nav>
+
+    <!-- 2. Function List Sidebar -->
+    <aside class="w-60 border-r border-borderCol flex flex-col bg-gray-50 flex-shrink-0">
+        <!-- Header -->
+        <div class="h-10 flex items-center justify-between px-3 border-b border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-gray-700">函数列表</span>
+                <span class="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-md">3</span>
+            </div>
+            <div class="flex gap-2 text-gray-400">
+                <i class="ph ph-trash hover:text-red-500 cursor-pointer text-lg"></i>
+                <i class="ph ph-plus hover:text-primary cursor-pointer text-lg"></i>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="p-2 border-b border-gray-100 bg-gray-50">
+            <div class="relative">
+                <i class="ph ph-magnifying-glass absolute left-2.5 top-1.5 text-gray-400 text-base"></i>
+                <input type="text" placeholder="请输入函数名称查询" class="w-full pl-8 pr-2 py-1 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:border-primary transition-colors">
+            </div>
+        </div>
+
+        <!-- List -->
+        <div class="flex-1 overflow-y-auto bg-gray-50">
+            <div class="func-item flex items-center justify-between px-4 py-2 hover:bg-white cursor-pointer group transition-colors" onclick="selectFunc(this)">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-1 rounded">TS</span>
+                    <span class="text-gray-600 group-hover:text-primary">chatgpt</span>
+                </div>
+                <div class="w-1.5 h-1.5 rounded-full bg-red-400 opacity-0 group-hover:opacity-100"></div>
+            </div>
+
+            <div class="func-item flex items-center justify-between px-4 py-2 bg-blue-50 border-l-2 border-primary cursor-pointer" onclick="selectFunc(this)">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-1 rounded">TS</span>
+                    <span class="text-primary font-medium">db-write</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+                    <i class="ph ph-dots-three-vertical text-gray-400"></i>
+                </div>
+            </div>
+
+            <div class="func-item flex items-center justify-between px-4 py-2 hover:bg-white cursor-pointer group transition-colors" onclick="selectFunc(this)">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-1 rounded">TS</span>
+                    <span class="text-gray-600 group-hover:text-primary">shared</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NPM Dependencies -->
+        <div class="h-1/3 border-t border-borderCol bg-gray-50 flex flex-col">
+            <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                <span class="font-bold text-gray-700 text-xs">NPM 依赖</span>
+                <i class="ph ph-plus hover:text-primary cursor-pointer text-lg text-gray-400"></i>
+            </div>
+            
+            <div class="flex px-3 border-b border-gray-200 bg-white">
+                <div class="px-2 py-1.5 text-xs font-medium border-b-2 border-gray-800 cursor-pointer">自定义依赖</div>
+                <div class="px-2 py-1.5 text-xs text-gray-400 cursor-pointer hover:text-gray-600">内置依赖 <span class="bg-gray-100 px-1 rounded">43</span></div>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
+                <i class="ph ph-package text-3xl opacity-20"></i>
+                <span class="text-xs opacity-60">暂无自定义依赖</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 3. Main Editor Area -->
+    <main class="flex-1 flex flex-col bg-white min-w-0">
+        <!-- Tabs -->
+        <header class="h-9 flex items-center border-b border-borderCol bg-gray-50 select-none overflow-x-auto">
+            <div class="h-full px-4 flex items-center gap-2 bg-white border-t-2 border-t-primary border-r border-gray-200 text-primary min-w-fit cursor-pointer">
+                <i class="ph ph-file-ts text-lg"></i>
+                <span class="text-xs font-medium">db-write</span>
+                <i class="ph ph-dot text-red-500 text-2xl leading-3"></i>
+                <i class="ph ph-x ml-1 text-gray-400 hover:text-gray-600 rounded p-0.5 hover:bg-gray-100"></i>
+            </div>
+            <div class="h-full px-4 flex items-center gap-2 text-gray-500 border-r border-gray-200 hover:bg-gray-100 min-w-fit cursor-pointer transition-colors">
+                <i class="ph ph-file-ts text-lg"></i>
+                <span class="text-xs">chatgpt</span>
+                <i class="ph ph-dot text-red-500 text-2xl leading-3"></i>
+                <i class="ph ph-x ml-1 text-gray-400 hover:text-gray-600 rounded p-0.5 hover:bg-gray-100 opacity-0 group-hover:opacity-100"></i>
+            </div>
+        </header>
+
+        <!-- Toolbar -->
+        <div class="h-10 border-b border-borderCol flex items-center justify-between px-4 bg-white">
+            <div class="flex items-center text-xs text-gray-400">
+                <!-- Breadcrumbs or info -->
+                <span>Functions / db-write</span>
+            </div>
+            <div class="flex items-center gap-3">
+                 <button class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition-colors">
+                    <i class="ph ph-users"></i>
+                    协作 (1)
+                </button>
+                <button class="flex items-center gap-1.5 text-xs text-white bg-primary px-3 py-1.5 rounded hover:bg-primaryHover shadow-sm transition-colors">
+                    <i class="ph ph-rocket-launch"></i>
+                    发布
+                </button>
+            </div>
+        </div>
+
+        <!-- Code Editor -->
+        <div class="flex-1 flex overflow-hidden code-editor-container bg-white" onclick="document.getElementById('codeArea').focus()">
+            <!-- Line Numbers -->
+            <div class="w-12 pt-4 bg-gray-50 flex flex-col items-end line-numbers font-mono text-xs leading-6" id="lineNumbers">
+                1
+            </div>
+            
+            <!-- Textarea -->
+            <textarea id="codeArea" class="code-area flex-1 pt-4 pl-4 leading-6 border-none focus:ring-0 text-sm font-mono" spellcheck="false" autocomplete="off">import cloud from '@lafjs/cloud'
+
+export default async function (ctx: FunctionContext) {
+  const db = cloud.mongo.db
+
+  // Insert a new user record
+  await db.collection('users').insertOne({
+    username: 'laf_user',
+    createdAt: new Date(),
+    status: 'active'
+  })
+  
+  console.log("User created successfully");
+  return 'ok'
+}</textarea>
+        </div>
+
+        <!-- Bottom Console -->
+        <div class="h-48 border-t border-borderCol flex flex-col bg-white transition-all duration-300" id="consolePanel">
+            <!-- Console Header -->
+            <div class="h-8 flex items-center justify-between px-4 border-b border-gray-100 bg-gray-50 cursor-pointer" onclick="toggleConsole()">
+                <div class="flex items-center gap-4 text-xs font-medium text-gray-700 h-full">
+                    <span class="h-full flex items-center border-b-2 border-primary text-gray-900 px-1">Console</span>
+                    <span class="h-full flex items-center text-gray-400 hover:text-gray-600 px-1">Problems</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-400">
+                    <i class="ph ph-trash hover:text-gray-600"></i>
+                    <i class="ph ph-caret-down hover:text-gray-600 transition-transform" id="consoleToggleIcon"></i>
+                </div>
+            </div>
+            
+            <!-- Console Output -->
+            <div class="flex-1 overflow-y-auto p-2 font-mono text-xs bg-white" id="consoleOutput">
+                <!-- Logs will appear here -->
+                <div class="text-gray-400 italic p-2">系统准备就绪...</div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <footer class="h-7 border-t border-borderCol bg-gray-50 flex items-center justify-between px-3 text-[10px] text-gray-500 select-none">
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1 hover:text-gray-700 cursor-pointer"><i class="ph ph-globe"></i> En</span>
+                <span class="flex items-center gap-1 hover:text-gray-700 cursor-pointer"><i class="ph ph-app-window"></i> 当前应用: 101912</span>
+                <span class="flex items-center gap-1 text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full border border-green-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Running
+                </span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="hover:text-gray-700 cursor-pointer"><i class="ph ph-list-dashes"></i> 日志</span>
+                <span class="hover:text-gray-700 cursor-pointer"><i class="ph ph-chart-line-up"></i> 资源监控</span>
+                <span class="text-primary hover:text-primaryHover cursor-pointer font-medium">变更配置</span>
+            </div>
+        </footer>
+    </main>
+
+    <!-- 4. Right Debug Panel -->
+    <aside class="w-80 border-l border-borderCol bg-white flex flex-col flex-shrink-0 transition-all duration-300" id="debugPanel">
+        <!-- Debug Header -->
+        <div class="h-10 flex items-center px-4 border-b border-gray-100 bg-white">
+            <div class="flex gap-4 text-xs font-medium">
+                <span class="text-gray-800 border-b-2 border-gray-800 py-2.5 cursor-pointer">接口调试</span>
+                <span class="text-gray-400 py-2.5 hover:text-gray-600 cursor-pointer">Laf Pilot</span>
+                <span class="text-gray-400 py-2.5 hover:text-gray-600 cursor-pointer">历史版本</span>
+            </div>
+        </div>
+
+        <!-- Request Controls -->
+        <div class="p-4 border-b border-borderCol bg-white">
+            <!-- Method & Run -->
+            <div class="flex items-center gap-2 mb-4">
+                <div class="relative flex-1">
+                    <select id="httpMethod" class="appearance-none w-20 bg-gray-100 border border-gray-200 text-gray-700 text-xs rounded-l px-2 py-1.5 outline-none focus:border-primary font-bold">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input type="text" value="/db-write" class="absolute left-20 top-0 w-[calc(100%-5rem)] h-full border border-l-0 border-gray-200 rounded-r px-2 text-xs text-gray-500 outline-none focus:border-primary" readonly>
+                </div>
+                
+                <button id="runBtn" class="bg-primary hover:bg-primaryHover text-white text-xs px-4 py-1.5 rounded flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+                    <i class="ph ph-play-circle text-sm"></i>
+                    运行
+                </button>
+            </div>
+
+            <!-- Params Tabs -->
+            <div class="flex gap-4 text-xs border-b border-gray-100 mb-3">
+                <span class="pb-1 border-b-2 border-primary font-medium text-primary cursor-pointer">Query</span>
+                <span class="pb-1 text-gray-400 hover:text-gray-600 cursor-pointer">Headers</span>
+                <span class="pb-1 text-gray-400 hover:text-gray-600 cursor-pointer">Body</span>
+            </div>
+
+            <!-- Params Table -->
+            <div class="border border-gray-200 rounded text-xs">
+                <div class="grid grid-cols-2 bg-gray-50 border-b border-gray-200 p-1.5 text-gray-500">
+                    <div>参数名</div>
+                    <div class="pl-2 border-l border-gray-200">值</div>
+                </div>
+                <div class="grid grid-cols-2 p-0">
+                    <input type="text" placeholder="key" class="p-1.5 outline-none border-b border-gray-100 text-gray-600 focus:bg-blue-50">
+                    <input type="text" placeholder="value" class="p-1.5 outline-none border-l border-b border-gray-100 text-gray-600 focus:bg-blue-50">
+                </div>
+                 <div class="p-1.5 text-center text-gray-400 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <i class="ph ph-plus"></i> 添加
+                </div>
+            </div>
+        </div>
+
+        <!-- Run Result -->
+        <div class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+            <div class="h-8 flex items-center justify-between px-3 border-b border-gray-200 bg-white">
+                <span class="text-xs font-bold text-gray-700">运行结果</span>
+                <div class="flex gap-2 text-gray-400">
+                    <i class="ph ph-arrows-out-simple cursor-pointer hover:text-primary"></i>
+                    <i class="ph ph-caret-down cursor-pointer hover:text-primary"></i>
+                </div>
+            </div>
+            <div class="flex-1 p-3 overflow-auto font-mono text-xs relative" id="resultContainer">
+                <div class="text-gray-400 mt-4 text-center">点击运行查看结果...</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // 1. Line Number Synchronization
+        const codeArea = document.getElementById('codeArea');
+        const lineNumbers = document.getElementById('lineNumbers');
+
+        const updateLineNumbers = () => {
+            const lines = codeArea.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+        }
+
+        codeArea.addEventListener('input', updateLineNumbers);
+        codeArea.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = codeArea.scrollTop;
+        });
+        
+        // Initialize
+        updateLineNumbers();
+
+        // 2. Sidebar Selection Logic
+        function selectFunc(element) {
+            // Reset all
+            document.querySelectorAll('.func-item').forEach(el => {
+                el.classList.remove('bg-blue-50', 'border-l-2', 'border-primary');
+                el.classList.add('hover:bg-white', 'border-transparent');
+                
+                const textSpan = el.querySelector('span:nth-child(2)');
+                if(textSpan) {
+                    textSpan.classList.remove('text-primary', 'font-medium');
+                    textSpan.classList.add('text-gray-600');
+                }
+                
+                const dots = el.querySelector('.ph-dots-three-vertical');
+                if(dots) dots.parentElement.classList.add('hidden');
+            });
+
+            // Set Active
+            element.classList.add('bg-blue-50', 'border-l-2', 'border-primary');
+            element.classList.remove('hover:bg-white', 'border-transparent');
+            
+            const textSpan = element.querySelector('span:nth-child(2)');
+            if(textSpan) {
+                textSpan.classList.remove('text-gray-600');
+                textSpan.classList.add('text-primary', 'font-medium');
+            }
+        }
+
+        // 3. Run Simulation Logic
+        const runBtn = document.getElementById('runBtn');
+        const consoleOutput = document.getElementById('consoleOutput');
+        const resultContainer = document.getElementById('resultContainer');
+
+        runBtn.addEventListener('click', () => {
+            // 1. Loading State
+            const originalText = runBtn.innerHTML;
+            runBtn.innerHTML = `<i class="ph ph-spinner animate-spin text-sm"></i> 运行中`;
+            runBtn.disabled = true;
+            runBtn.classList.add('opacity-75');
+            resultContainer.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 gap-2"><i class="ph ph-spinner animate-spin"></i> 请求中...</div>`;
+
+            // 2. Simulate Delay
+            setTimeout(() => {
+                // Generate fake data
+                const reqId = '4143bad7-' + Math.random().toString(16).substr(2, 4) + '-' + Math.random().toString(16).substr(2, 4) + '-' + Math.random().toString(16).substr(2, 12);
+                const time = (Math.random() * 50 + 10).toFixed(3);
+                
+                // 3. Update Console
+                const logItem = document.createElement('div');
+                logItem.className = "border-b border-gray-100 py-1.5 px-2 hover:bg-gray-50 flex items-center justify-between text-[11px] animate-fade-in";
+                logItem.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600 font-bold">RequestID:</span>
+                        <span class="text-gray-800 font-mono">${reqId}</span>
+                        <i class="ph ph-copy text-gray-300 hover:text-primary cursor-pointer"></i>
+                    </div>
+                    <span class="text-gray-400 font-mono">Time-Usage: ${time}ms</span>
+                `;
+                consoleOutput.appendChild(logItem);
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+
+                // 4. Update Result
+                resultContainer.innerHTML = `
+                    <div class="text-codeString font-mono text-sm">"ok"</div>
+                    <div class="mt-2 text-gray-400 text-xs border-t border-gray-200 pt-2">
+                        // Status: 200 OK<br>
+                        // Type: String
+                    </div>
+                `;
+
+                // 5. Reset Button
+                runBtn.innerHTML = originalText;
+                runBtn.disabled = false;
+                runBtn.classList.remove('opacity-75');
+
+            }, 800);
+        });
+
+        // 4. Console Toggle Logic
+        let isConsoleOpen = true;
+        function toggleConsole() {
+            const panel = document.getElementById('consolePanel');
+            const icon = document.getElementById('consoleToggleIcon');
+            
+            if (isConsoleOpen) {
+                panel.style.height = '32px'; // Only header height
+                icon.style.transform = 'rotate(-90deg)';
+            } else {
+                panel.style.height = '192px'; // h-48
+                icon.style.transform = 'rotate(0deg)';
+            }
+            isConsoleOpen = !isConsoleOpen;
+        }
+
+        // Add fade in animation
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fade-in {
+                animation: fadeIn 0.3s ease-out forwards;
+            }
+        `;
+        document.head.appendChild(style);
+
+    </script>
+</body>
+</html>

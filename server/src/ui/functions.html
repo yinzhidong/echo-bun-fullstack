@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Function App</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+    <!-- <script src="https://unpkg.com/@phosphor-icons/web"></script> -->
+    <!-- Phosphor Icons
+    ["regular", "thin", "light", "bold", "fill", "duotone"] 
+    -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/thin/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/light/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/duotone/style.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00bfa5', /* Laf Green/Teal */
+                        primaryHover: '#008f7a',
+                        sidebarBg: '#ffffff',
+                        borderCol: '#e5e7eb',
+                        textMain: '#374151',
+                        textLight: '#9ca3af',
+                        codeBg: '#ffffff',
+                        codeString: '#059669',
+                        codeKeyword: '#2563eb',
+                        codeFunc: '#d97706',
+                    },
+                    fontSize: {
+                        'xxs': '0.65rem',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+        /* Editor Styles */
+        .code-editor-container {
+            position: relative;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .line-numbers {
+            text-align: right;
+            color: #9ca3af;
+            user-select: none;
+            padding-right: 12px;
+            border-right: 1px solid #f3f4f6;
+        }
+        textarea.code-area {
+            background: transparent;
+            color: #1f2937;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+            tab-size: 2;
+        }
+        /* Syntax Highlight Simulation (Simple) */
+        .highlight-keyword {
+            color: #2563eb;
+        }
+        .highlight-string {
+            color: #059669;
+        }
+        .highlight-func {
+            color: #d97706;
+        }
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            min-width: 150px;
+        }
+        .context-menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .context-menu-item:hover {
+            background: #f3f4f6;
+        }
+        .context-menu-item:first-child {
+            border-radius: 6px 6px 0 0;
+        }
+        .context-menu-item:last-child {
+            border-radius: 0 0 6px 6px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-white h-screen w-screen flex overflow-hidden text-sm text-gray-700 selection:bg-teal-100">
+    <!-- 1. Left Icon Sidebar -->
+    <nav class="w-12 border-r border-borderCol flex flex-col items-center py-4 bg-gray-50 z-20 flex-shrink-0">
+        <!-- Logo Area -->
+        <div class="mb-6 cursor-pointer">
+            <div class="w-7 h-7 bg-transparent flex items-center justify-center">
+                <!-- Simple Logo Icon -->
+                <svg viewBox="0 0 24 24" class="w-6 h-6 text-primary fill-current">
+                    <path
+                        d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" />
+                </svg>
+            </div>
+            <div class="text-[10px] text-center mt-1 text-gray-500 scale-90">EchoYZD</div>
+        </div>
+        <!-- Menu Items -->
+        <div class="flex flex-col gap-6 w-full">
+            <div class="nav-item group cursor-pointer flex flex-col items-center gap-1 relative text-primary">
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary rounded-r"></div>
+                <i class="ph ph-function text-2xl group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">函数</span>
+            </div>
+            <!-- 
+            <div
+                class="nav-item group cursor-pointer flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
+                <i class="ph ph-database text-2xl group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px]">集合</span>
+            </div>
+            <div
+                class="nav-item group cursor-pointer flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
+                <i class="ph ph-files text-2xl group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px]">存储</span>
+            </div> -->
+        </div>
+        <!-- Bottom Settings -->
+        <div class="mt-auto mb-2 cursor-pointer text-gray-400 hover:text-gray-600">
+            <i class="ph ph-gear text-2xl"></i>
+        </div>
+    </nav>
+    <!-- 2. Function List Sidebar -->
+    <aside class="w-60 border-r border-borderCol flex flex-col bg-gray-50 flex-shrink-0">
+        <!-- Header -->
+        <div class="h-10 flex items-center justify-between px-3 border-b border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-gray-700">函数列表</span>
+                <span class="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-md" id="funcCount">2</span>
+            </div>
+            <div class="flex gap-2 text-gray-400">
+                <i class="ph ph-plus hover:text-primary cursor-pointer text-lg" onclick="addNewFunction()"></i>
+                
+            </div>
+        </div>
+        <!-- Search -->
+        <div class="p-2 border-b border-gray-100 bg-gray-50">
+            <div class="relative">
+                <i class="ph ph-magnifying-glass absolute left-2.5 top-1.5 text-gray-400 text-base"></i>
+                <input type="text" placeholder="请输入函数名称查询" id="searchInput"
+                    class="w-full pl-8 pr-2 py-1 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:border-primary transition-colors">
+            </div>
+        </div>
+        <!-- List -->
+        <div class="flex-1 overflow-y-auto bg-gray-50" id="functionList">
+            <!-- Function items will be rendered here -->
+        </div>
+    </aside>
+    <!-- 3. Main Editor Area -->
+    <main class="flex-1 flex flex-col bg-white min-w-0">
+        <!-- Tabs -->
+        <header class="h-9 flex items-center border-b border-borderCol bg-gray-50 select-none overflow-x-auto" id="tabsContainer">
+            <!-- Tabs will be rendered here -->
+        </header>
+        <!-- Toolbar -->
+        <div class="h-10 border-b border-borderCol flex items-center justify-between px-4 bg-white">
+            <div class="flex items-center text-xs text-gray-400">
+                <!-- Breadcrumbs or info -->
+                <span id="breadcrumb">Functions / db-write</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- <button
+                    class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition-colors">
+                    <i class="ph ph-users"></i>
+                    协作
+                </button> -->
+                <button
+                    class="flex items-center gap-1.5 text-xs text-white bg-primary px-3 py-1.5 rounded hover:bg-primaryHover shadow-sm transition-colors">
+                    <i class="ph ph-rocket-launch"></i>
+                    发布
+                </button>
+            </div>
+        </div>
+        <!-- Code Editor -->
+        <div class="flex-1 flex overflow-hidden code-editor-container bg-white"
+            onclick="document.getElementById('codeArea').focus()">
+            <!-- Line Numbers -->
+            <div class="w-12 pt-4 bg-gray-50 flex flex-col items-end line-numbers font-mono text-xs leading-6"
+                id="lineNumbers">
+                1
+            </div>
+            <!-- Textarea -->
+            <textarea id="codeArea"
+                class="code-area flex-1 pt-4 pl-4 leading-6 border-none focus:ring-0 text-sm font-mono"
+                spellcheck="false" autocomplete="off"></textarea>
+        </div>
+        <!-- Bottom Console -->
+        <div class="h-48 border-t border-borderCol flex flex-col bg-white transition-all duration-300"
+            id="consolePanel">
+            <!-- Console Header -->
+            <div class="h-8 flex items-center justify-between px-4 border-b border-gray-100 bg-gray-50 cursor-pointer"
+                onclick="toggleConsole()">
+                <div class="flex items-center gap-4 text-xs font-medium text-gray-700 h-full">
+                    <span class="h-full flex items-center border-b-2 border-primary text-gray-900 px-1">Console</span>
+                    <span class="h-full flex items-center text-gray-400 hover:text-gray-600 px-1">Problems</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-400">
+                    <i class="ph ph-trash hover:text-gray-600"></i>
+                    <i class="ph ph-caret-down hover:text-gray-600 transition-transform" id="consoleToggleIcon"></i>
+                </div>
+            </div>
+            <!-- Console Output -->
+            <div class="flex-1 overflow-y-auto p-2 font-mono text-xs bg-white" id="consoleOutput">
+                <!-- Logs will appear here -->
+                <div class="text-gray-400 italic p-2">系统准备就绪...</div>
+            </div>
+        </div>
+        <!-- Status Bar -->
+        <footer
+            class="h-7 border-t border-borderCol bg-gray-50 flex items-center justify-between px-3 text-[10px] text-gray-500 select-none">
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1 hover:text-gray-700 cursor-pointer"><i
+                        class="ph ph-globe"></i>En</span>
+            </div>
+        </footer>
+    </main>
+    <!-- 4. Right Debug Panel -->
+    <aside class="w-80 border-l border-borderCol bg-white flex flex-col flex-shrink-0 transition-all duration-300"
+        id="debugPanel">
+        <!-- Debug Header -->
+        <div class="h-10 flex items-center px-4 border-b border-gray-100 bg-white">
+            <div class="flex gap-4 text-xs font-medium">
+                <span class="text-gray-800 border-b-2 border-gray-800 py-2.5 cursor-pointer">接口调试</span>
+            </div>
+        </div>
+        <!-- Request Controls -->
+        <div class="p-4 border-b border-borderCol bg-white">
+            <!-- Method & Run -->
+            <div class="flex items-center gap-2 mb-4">
+                <div class="relative flex-1">
+                    <select id="httpMethod"
+                        class="appearance-none w-20 bg-gray-100 border border-gray-200 text-gray-700 text-xs rounded-l px-2 py-1.5 outline-none focus:border-primary font-bold">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input type="text" id="apiPath" value="/db-write"
+                        class="absolute left-20 top-0 w-[calc(100%-5rem)] h-full border border-l-0 border-gray-200 rounded-r px-2 text-xs text-gray-500 outline-none focus:border-primary"
+                        readonly>
+                </div>
+                <button id="runBtn"
+                    class="bg-primary hover:bg-primaryHover text-white text-xs px-4 py-1.5 rounded flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+                    <i class="ph ph-play-circle text-sm"></i>
+                    运行
+                </button>
+            </div>
+            <!-- Params Tabs -->
+            <div class="flex gap-4 text-xs border-b border-gray-100 mb-3" id="paramsTabs">
+                <span class="pb-1 border-b-2 border-primary font-medium text-primary cursor-pointer" data-tab="query" onclick="switchParamsTab('query')">Query</span>
+                <span class="pb-1 text-gray-400 hover:text-gray-600 cursor-pointer" data-tab="headers" onclick="switchParamsTab('headers')">Headers</span>
+                <span class="pb-1 text-gray-400 hover:text-gray-600 cursor-pointer" data-tab="body" onclick="switchParamsTab('body')">Body</span>
+            </div>
+            <!-- Params Container -->
+            <div id="paramsContainer">
+                <!-- Query Params -->
+                <div id="queryParams" class="params-content">
+                    <div class="border border-gray-200 rounded text-xs">
+                        <div class="grid grid-cols-2 bg-gray-50 border-b border-gray-200 p-1.5 text-gray-500">
+                            <div>参数名</div>
+                            <div class="pl-2 border-l border-gray-200">值</div>
+                        </div>
+                        <div id="queryParamsList"></div>
+                        <div class="p-1.5 text-center text-gray-400 hover:bg-gray-50 cursor-pointer transition-colors" onclick="addParam('query')">
+                            <i class="ph ph-plus"></i> 添加
+                        </div>
+                    </div>
+                </div>
+                <!-- Headers Params -->
+                <div id="headersParams" class="params-content hidden">
+                    <div class="border border-gray-200 rounded text-xs">
+                        <div class="grid grid-cols-2 bg-gray-50 border-b border-gray-200 p-1.5 text-gray-500">
+                            <div>Header名</div>
+                            <div class="pl-2 border-l border-gray-200">值</div>
+                        </div>
+                        <div id="headersParamsList"></div>
+                        <div class="p-1.5 text-center text-gray-400 hover:bg-gray-50 cursor-pointer transition-colors" onclick="addParam('headers')">
+                            <i class="ph ph-plus"></i> 添加
+                        </div>
+                    </div>
+                </div>
+                <!-- Body Params -->
+                <div id="bodyParams" class="params-content hidden">
+                    <div class="border border-gray-200 rounded text-xs">
+                        <div class="bg-gray-50 border-b border-gray-200 p-1.5 text-gray-500">
+                            Request Body (JSON)
+                        </div>
+                        <textarea id="bodyContent" class="w-full p-2 font-mono text-xs outline-none focus:bg-blue-50 min-h-[120px]" placeholder='{\n  "key": "value"\n}'></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Run Result -->
+        <div class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+            <div class="h-8 flex items-center justify-between px-3 border-b border-gray-200 bg-white">
+                <span class="text-xs font-bold text-gray-700">运行结果</span>
+                <div class="flex gap-2 text-gray-400">
+                    <i class="ph ph-arrows-out-simple cursor-pointer hover:text-primary"></i>
+                    <i class="ph ph-caret-down cursor-pointer hover:text-primary"></i>
+                </div>
+            </div>
+            <div class="flex-1 p-3 overflow-auto font-mono text-xs relative" id="resultContainer">
+                <div class="text-gray-400 mt-4 text-center">点击运行查看结果...</div>
+            </div>
+        </div>
+    </aside>
+    <!-- Context Menu (Hidden by default) -->
+    <div id="contextMenu" class="context-menu hidden"></div>
+    <!-- JavaScript Logic -->
+    <script>
+        // Data Structure for Functions
+        let functions = [
+            {
+                id: 1,
+                name: 'db-write',
+                content: `import cloud from '@lafjs/cloud'
+export default async function (ctx: FunctionContext) {
+  const db = cloud.mongo.db
+  // Insert a new user record
+  await db.collection('users').insertOne({
+    username: 'laf_user',
+    createdAt: new Date(),
+    status: 'active'
+  })
+  
+  console.log("User created successfully");
+  return 'ok'
+}`,
+                isDirty: true,
+                isOpen: true
+            },
+            {
+                id: 2,
+                name: 'shared',
+                content: `export const utils = {
+  formatDate: (date) => {
+    return new Date(date).toISOString();
+  },
+  
+  generateId: () => {
+    return Math.random().toString(36).substr(2, 9);
+  }
+}`,
+                isDirty: false,
+                isOpen: false
+            }
+        ];
+        let currentFunctionId = 1;
+        let nextFunctionId = 3;
+        let openTabs = [1];
+        let currentTab = 'query';
+        // Parameters data
+        let queryParams = [];
+        let headersParams = [];
+        // Initialize
+        function init() {
+            renderFunctionList();
+            renderTabs();
+            loadFunction(currentFunctionId);
+            updateLineNumbers();
+        }
+        // Render Function List
+        function renderFunctionList() {
+            const list = document.getElementById('functionList');
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = functions.filter(f => f.name.toLowerCase().includes(searchValue));
+            
+            list.innerHTML = filtered.map(func => `
+                <div class="func-item flex items-center justify-between px-4 py-2 cursor-pointer ${func.id === currentFunctionId ? 'bg-blue-50 border-l-2 border-primary' : 'hover:bg-white'}"
+                    onclick="selectFunc(${func.id})" data-func-id="${func.id}">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-1 rounded">JS</span>
+                        <span class="${func.id === currentFunctionId ? 'text-primary font-medium' : 'text-gray-600'}">${func.name}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${func.isDirty ? '<div class="w-1.5 h-1.5 rounded-full bg-red-400"></div>' : ''}
+                        <i class="ph ph-dots-three-vertical text-gray-400 hover:text-gray-600" onclick="showContextMenu(event, ${func.id})"></i>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('funcCount').textContent = functions.length;
+        }
+        // Render Tabs
+        function renderTabs() {
+            const container = document.getElementById('tabsContainer');
+            const openFuncs = functions.filter(f => openTabs.includes(f.id));
+            
+            container.innerHTML = openFuncs.map(func => `
+                <div class="h-full px-4 flex items-center gap-2 ${func.id === currentFunctionId ? 'bg-white border-t-2 border-t-primary text-primary' : 'text-gray-500 hover:bg-gray-100'} border-r border-gray-200 min-w-fit cursor-pointer transition-colors"
+                    onclick="selectFunc(${func.id})">
+                    <i class="ph ph-file-ts text-lg"></i>
+                    <span class="text-xs ${func.id === currentFunctionId ? 'font-medium' : ''}">${func.name}</span>
+                    ${func.isDirty ? '<i class="ph ph-dot text-red-500 text-2xl leading-3"></i>' : ''}
+                    <i class="ph ph-x ml-1 text-gray-400 hover:text-gray-600 rounded p-0.5 hover:bg-gray-100" onclick="closeTab(event, ${func.id})"></i>
+                </div>
+            `).join('');
+        }
+        // Select Function
+        function selectFunc(id) {
+            currentFunctionId = id;
+            
+            // Add to open tabs if not already
+            if (!openTabs.includes(id)) {
+                openTabs.push(id);
+            }
+            
+            loadFunction(id);
+            renderFunctionList();
+            renderTabs();
+        }
+        // Load Function Content
+        function loadFunction(id) {
+            const func = functions.find(f => f.id === id);
+            if (!func) return;
+            
+            const codeArea = document.getElementById('codeArea');
+            codeArea.value = func.content;
+            
+            document.getElementById('breadcrumb').textContent = `Functions / ${func.name}`;
+            document.getElementById('apiPath').value = `/${func.name}`;
+            
+            updateLineNumbers();
+        }
+        // Close Tab
+        function closeTab(event, id) {
+            event.stopPropagation();
+            
+            openTabs = openTabs.filter(tabId => tabId !== id);
+            
+            if (currentFunctionId === id && openTabs.length > 0) {
+                currentFunctionId = openTabs[openTabs.length - 1];
+                loadFunction(currentFunctionId);
+            }
+            
+            renderTabs();
+            renderFunctionList();
+        }
+        // Add New Function
+        function addNewFunction() {
+            const newFunc = {
+                id: nextFunctionId++,
+                name: `function-${nextFunctionId - 1}`,
+                content: `import cloud from '@lafjs/cloud'
+export default async function (ctx: FunctionContext) {
+  // Your code here
+  return { success: true }
+}`,
+                isDirty: true,
+                isOpen: true
+            };
+            
+            functions.push(newFunc);
+            selectFunc(newFunc.id);
+        }
+        // Show Context Menu
+        function showContextMenu(event, funcId) {
+            event.stopPropagation();
+            
+            const menu = document.getElementById('contextMenu');
+            const func = functions.find(f => f.id === funcId);
+            
+            menu.innerHTML = `
+                <div class="context-menu-item" onclick="renameFunction(${funcId})">
+                    <i class="ph ph-pencil"></i>
+                    <span>重命名</span>
+                </div>
+                <div class="context-menu-item" onclick="copyFunction(${funcId})">
+                    <i class="ph ph-copy"></i>
+                    <span>复制</span>
+                </div>
+                <div class="context-menu-item text-red-600 hover:bg-red-50" onclick="deleteFunction(${funcId})">
+                    <i class="ph ph-trash"></i>
+                    <span>删除</span>
+                </div>
+            `;
+            
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+            menu.classList.remove('hidden');
+            
+            // Close menu on click outside
+            setTimeout(() => {
+                document.addEventListener('click', closeContextMenu);
+            }, 0);
+        }
+        function closeContextMenu() {
+            document.getElementById('contextMenu').classList.add('hidden');
+            document.removeEventListener('click', closeContextMenu);
+        }
+        // Rename Function
+        function renameFunction(id) {
+            const func = functions.find(f => f.id === id);
+            const newName = prompt('请输入新的函数名称：', func.name);
+            
+            if (newName && newName.trim() !== '') {
+                func.name = newName.trim();
+                renderFunctionList();
+                renderTabs();
+                if (currentFunctionId === id) {
+                    document.getElementById('breadcrumb').textContent = `Functions / ${func.name}`;
+                    document.getElementById('apiPath').value = `/${func.name}`;
+                }
+            }
+        }
+        // Copy Function
+        function copyFunction(id) {
+            const func = functions.find(f => f.id === id);
+            const newFunc = {
+                id: nextFunctionId++,
+                name: `${func.name}-copy`,
+                content: func.content,
+                isDirty: true,
+                isOpen: false
+            };
+            
+            functions.push(newFunc);
+            renderFunctionList();
+        }
+        // Delete Function
+        function deleteFunction(id) {
+            if (functions.length <= 1) {
+                alert('至少需要保留一个函数');
+                return;
+            }
+            
+            if (confirm('确定要删除这个函数吗？')) {
+                functions = functions.filter(f => f.id !== id);
+                openTabs = openTabs.filter(tabId => tabId !== id);
+                
+                if (currentFunctionId === id && functions.length > 0) {
+                    currentFunctionId = functions[0].id;
+                    if (!openTabs.includes(currentFunctionId)) {
+                        openTabs.push(currentFunctionId);
+                    }
+                    loadFunction(currentFunctionId);
+                }
+                
+                renderFunctionList();
+                renderTabs();
+            }
+        }
+        // Switch Params Tab
+        function switchParamsTab(tab) {
+            currentTab = tab;
+            
+            // Update tab styles
+            const tabs = document.querySelectorAll('#paramsTabs span');
+            tabs.forEach(t => {
+                const tabName = t.getAttribute('data-tab');
+                if (tabName === tab) {
+                    t.classList.add('border-b-2', 'border-primary', 'font-medium', 'text-primary');
+                    t.classList.remove('text-gray-400');
+                } else {
+                    t.classList.remove('border-b-2', 'border-primary', 'font-medium', 'text-primary');
+                    t.classList.add('text-gray-400');
+                }
+            });
+            
+            // Show/hide content
+            document.querySelectorAll('.params-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${tab}Params`).classList.remove('hidden');
+        }
+        // Add Parameter
+        function addParam(type) {
+            if (type === 'query') {
+                queryParams.push({ key: '', value: '' });
+                renderQueryParams();
+            } else if (type === 'headers') {
+                headersParams.push({ key: '', value: '' });
+                renderHeadersParams();
+            }
+        }
+        // Render Query Params
+        function renderQueryParams() {
+            const list = document.getElementById('queryParamsList');
+            list.innerHTML = queryParams.map((param, index) => `
+                <div class="grid grid-cols-2 p-0 border-b border-gray-100">
+                    <input type="text" placeholder="key" value="${param.key}"
+                        onchange="updateParam('query', ${index}, 'key', this.value)"
+                        class="p-1.5 outline-none text-gray-600 focus:bg-blue-50">
+                    <div class="flex border-l border-gray-100">
+                        <input type="text" placeholder="value" value="${param.value}"
+                            onchange="updateParam('query', ${index}, 'value', this.value)"
+                            class="p-1.5 outline-none text-gray-600 focus:bg-blue-50 flex-1">
+                        <i class="ph ph-trash text-gray-400 hover:text-red-500 cursor-pointer p-1.5" onclick="removeParam('query', ${index})"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+        // Render Headers Params
+        function renderHeadersParams() {
+            const list = document.getElementById('headersParamsList');
+            list.innerHTML = headersParams.map((param, index) => `
+                <div class="grid grid-cols-2 p-0 border-b border-gray-100">
+                    <input type="text" placeholder="key" value="${param.key}"
+                        onchange="updateParam('headers', ${index}, 'key', this.value)"
+                        class="p-1.5 outline-none text-gray-600 focus:bg-blue-50">
+                    <div class="flex border-l border-gray-100">
+                        <input type="text" placeholder="value" value="${param.value}"
+                            onchange="updateParam('headers', ${index}, 'value', this.value)"
+                            class="p-1.5 outline-none text-gray-600 focus:bg-blue-50 flex-1">
+                        <i class="ph ph-trash text-gray-400 hover:text-red-500 cursor-pointer p-1.5" onclick="removeParam('headers', ${index})"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+        // Update Parameter
+        function updateParam(type, index, field, value) {
+            if (type === 'query') {
+                queryParams[index][field] = value;
+            } else if (type === 'headers') {
+                headersParams[index][field] = value;
+            }
+        }
+        // Remove Parameter
+        function removeParam(type, index) {
+            if (type === 'query') {
+                queryParams.splice(index, 1);
+                renderQueryParams();
+            } else if (type === 'headers') {
+                headersParams.splice(index, 1);
+                renderHeadersParams();
+            }
+        }
+        // Line Number Synchronization
+        const codeArea = document.getElementById('codeArea');
+        const lineNumbers = document.getElementById('lineNumbers');
+        const updateLineNumbers = () => {
+            const lines = codeArea.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+        }
+        codeArea.addEventListener('input', () => {
+            updateLineNumbers();
+            
+            // Mark as dirty
+            const func = functions.find(f => f.id === currentFunctionId);
+            if (func) {
+                func.content = codeArea.value;
+                func.isDirty = true;
+                renderFunctionList();
+                renderTabs();
+            }
+        });
+        codeArea.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = codeArea.scrollTop;
+        });
+        // Search Functions
+        document.getElementById('searchInput').addEventListener('input', renderFunctionList);
+        // Run Simulation Logic
+        const runBtn = document.getElementById('runBtn');
+        const consoleOutput = document.getElementById('consoleOutput');
+        const resultContainer = document.getElementById('resultContainer');
+        runBtn.addEventListener('click', () => {
+            // 1. Loading State
+            const originalText = runBtn.innerHTML;
+            runBtn.innerHTML = `<i class="ph ph-spinner animate-spin text-sm"></i> 运行中`;
+            runBtn.disabled = true;
+            runBtn.classList.add('opacity-75');
+            resultContainer.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 gap-2"><i class="ph ph-spinner animate-spin"></i> 请求中...</div>`;
+            // 2. Simulate Delay
+            setTimeout(() => {
+                // Generate fake data
+                const reqId = '4143bad7-' + Math.random().toString(16).substr(2, 4) + '-' + Math.random().toString(16).substr(2, 4) + '-' + Math.random().toString(16).substr(2, 12);
+                const time = (Math.random() * 50 + 10).toFixed(3);
+                // 3. Update Console
+                const logItem = document.createElement('div');
+                logItem.className = "border-b border-gray-100 py-1.5 px-2 hover:bg-gray-50 flex items-center justify-between text-[11px] animate-fade-in";
+                logItem.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600 font-bold">RequestID:</span>
+                        <span class="text-gray-800 font-mono">${reqId}</span>
+                        <i class="ph ph-copy text-gray-300 hover:text-primary cursor-pointer"></i>
+                    </div>
+                    <span class="text-gray-400 font-mono">Time-Usage: ${time}ms</span>
+                `;
+                consoleOutput.appendChild(logItem);
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                // 4. Update Result
+                resultContainer.innerHTML = `
+                    <div class="text-codeString font-mono text-sm">"ok"</div>
+                    <div class="mt-2 text-gray-400 text-xs border-t border-gray-200 pt-2">
+                        // Status: 200 OK<br>
+                        // Type: String
+                    </div>
+                `;
+                // 5. Reset Button
+                runBtn.innerHTML = originalText;
+                runBtn.disabled = false;
+                runBtn.classList.remove('opacity-75');
+            }, 800);
+        });
+        // Console Toggle Logic
+        let isConsoleOpen = true;
+        function toggleConsole() {
+            const panel = document.getElementById('consolePanel');
+            const icon = document.getElementById('consoleToggleIcon');
+            if (isConsoleOpen) {
+                panel.style.height = '32px'; // Only header height
+                icon.style.transform = 'rotate(-90deg)';
+            } else {
+                panel.style.height = '192px'; // h-48
+                icon.style.transform = 'rotate(0deg)';
+            }
+            isConsoleOpen = !isConsoleOpen;
+        }
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
+
+
+
+<!-- 
+在此基础上，实现如下功能：
+1. 点击+号，新增js文件，并自动打开编辑器
+2. 点击js文件，右侧编辑器显示文件内容
+3. 点击js文件右侧的...图标，显示更多操作选项，包括：删除、重命名、复制功能
+4. 右侧的接口调试区域，query、Headers、Body可进行切换。添加添加，可以动态添加参数。
+
+
+https://phosphoricons.com/?q=plus
+
+https://lmarena.ai/c/019ac9ca-1a34-7f74-9a3d-7ac6b1796c10
+-->

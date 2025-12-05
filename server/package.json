@@ -1,0 +1,33 @@
+{
+  "name": "echo-kit-api",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "ts-node ./test/test.ts",
+    "start": "cross-env NODE_ENV=production bun run src/main.ts",
+    "dev": "bun run --watch src/main.ts",
+    "db:gen": "bun prisma generate",
+    "build_app": "cross-env NODE_ENV=production bun build src/main.ts --compile --minify --outfile hono_api",
+    "build_app:win": "cross-env NODE_ENV=production bun build src/main.ts --compile --minify --windows-hide-console --outfile hono_api"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.13.0",
+    "@types/bun": "latest",
+    "cross-env": "^10.1.0",
+    "ts-node": "^10.9.2",
+    "zod": "^4.0.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.6",
+    "@hono/zod-validator": "^0.7.4",
+    "@napi-rs/canvas": "^0.1.82",
+    "dotenv": "^17.2.3",
+    "hono": "^4.10.6",
+    "kitojs": "^1.0.0-alpha.4",
+    "prisma": "^5.13.0"
+  }
+}
