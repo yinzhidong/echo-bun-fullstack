@@ -1,9 +1,13 @@
 import { Database } from "bun:sqlite";
 
 // 初始化数据库
-const db = new Database("qrcodes.db");
+const db = new Database("qrcodes.db", {
+  // https://bun.com/docs/runtime/sqlite#safeintegers%3A-true
+  safeIntegers: true
+});
 db.run("PRAGMA journal_mode = WAL;");
 db.run("PRAGMA foreign_keys = ON;");
+
 
 
 // 创建二维码表（如果不存在）

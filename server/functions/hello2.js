@@ -2,7 +2,7 @@ export async function main() {
   console.log(`Hello from hello2.js ctx=${JSON.stringify(ctx)}`);
 
   try {
-    const response = await fetch('https://api.github.com/users/github');
+    const response = await fetch('https://fakestoreapi.com/products');
     const data = await response.json();
     // console.log(data);
 

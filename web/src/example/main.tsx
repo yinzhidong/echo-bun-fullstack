@@ -8,7 +8,7 @@ import { I18nextProvider } from 'react-i18next'
 import { ErrorBoundary } from '@/handler/ErrorBoundary'
 import i18n from '@/i18n'
 import { ENV } from '@/utils/env'
-import App1 from '@/example/apps/App1'
+import App1 from '@/example/apps/app1/App1'
 
 // import { Toaster } from 'sonner'
 // import { LoadingFallback } from '@/components/common/LoadingFallBack'

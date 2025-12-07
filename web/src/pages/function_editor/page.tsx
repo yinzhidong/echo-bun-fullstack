@@ -116,7 +116,7 @@ export default function FunctionPage() {
         const newFunc: FunctionItem = {
             id: nextFunctionId,
             name: `function-${nextFunctionId}`,
-            content: `export default async function (ctx: FunctionContext) {
+            content: `export default async function () {
   // Your code here
   return { success: true }
 }`,
@@ -170,11 +170,7 @@ export default function FunctionPage() {
 
     // 删除函数
     const deleteFunction = (id: number): void => {
-        if (functions.length <= 1) {
-            alert('至少需要保留一个函数');
-            return;
-        }
-
+        
         if (confirm('确定要删除这个函数吗？')) {
             const newFunctions = functions.filter(f => f.id !== id);
             const newOpenTabs = openTabs.filter(tabId => tabId !== id);

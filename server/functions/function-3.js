@@ -1,4 +1,4 @@
-export default async function (ctx: FunctionContext) {
+export default async function () {
   // Your code here
   return { success: true }
 }

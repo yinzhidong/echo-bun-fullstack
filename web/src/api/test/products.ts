@@ -1,27 +1,7 @@
+import { CreateProduct } from "@/example/apps/app1/types/request"
+import { Product } from "@/example/apps/app1/types/response"
+
 const BASE_URL = 'https://fakestoreapi.com/products'
-
-export interface Product {
-    id: number
-    title: string
-    price: number
-    description: string
-    category: string
-    image: string
-    rating?: Rating
-}
-
-export interface Rating {
-    rate: number
-    count: number
-}
-
-export interface CreateProduct {
-    title: string
-    price: number
-    description: string
-    image: string
-    category: string
-}
 
 
 // 获取所有商品
