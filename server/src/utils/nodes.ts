@@ -31,7 +31,7 @@ export const initFileAbsolutePath = (filePath: string): string => {
     const absPath = path.join(appDIR, filePath);
     console.log(`initFileAbsolutePath: ${absPath}`);
     
-    if(!fs.existsSync(absPath)) {
+    if(!fileExists(absPath)) {
         // 创建目录
         fs.mkdirSync(absPath, { recursive: true })
     }
@@ -40,6 +40,14 @@ export const initFileAbsolutePath = (filePath: string): string => {
 }
 
 
+export const fileExists = (filePath: string): boolean => {
+    return fs.existsSync(filePath)
+}
+
+
+export const dirName = (currentPath: string): string => {
+    return path.dirname(currentPath);
+}
 
 
 
@@ -85,4 +93,9 @@ export const sleep = (time: number = 1000) => {
     return new Promise((resolve) => {
         setTimeout(resolve, time)
     })
+}
+
+
+export const timestampFilename = (prefix: string = 'output', suffix: string = '.mp4') => {
+    return prefix + '_' + timestamp() + suffix
 }

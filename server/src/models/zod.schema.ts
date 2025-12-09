@@ -50,11 +50,13 @@ export const FunctionInvokeSchema = z.object({
 })
 
 
-// export type UserCreate = {
-//     name: string;
-//     email: string;
-//     password: string;
-// }
+
+export const VideoCompressSchema = z.object({
+  filePath: z.string(),
+})
+
+
+
 
 // 使用 z.infer 类型推导
 export type UserCreate = z.infer<typeof UserCreateSchema>
@@ -79,3 +81,6 @@ export type GithubCardType = z.infer<typeof GithubCardSchema>
 export type FunctionCreateType = z.infer<typeof FunctionCreateSchema>
 export type FunctionDeleteType = z.infer<typeof FunctionDeleteSchema>
 export type FunctionInvokeType = z.infer<typeof FunctionInvokeSchema>
+
+
+export type VideoCompressType = z.infer<typeof VideoCompressSchema>

@@ -14,6 +14,7 @@ import { errorHandler, notFound } from './middlewares'
 import { PORT } from '@/utils/env'
 import { appDIR } from '@/utils/nodes'
 import aiProxyRouter from './routers/aiproxy.router'
+import videoRouter from './routers/video.router'
 
 
 // Fix BigInt issue
@@ -76,6 +77,7 @@ app.use(
 app.route('/users', userRouter)
 app.route('/api/v1/generate', cardGenRouter)
 app.route('/api/v1/function', functionRouter)
+app.route('/api/v1/video', videoRouter)
 app.route('/jsx', jsxRouter)
 app.route('/html', htmlRouter)
 app.route('/api', aiProxyRouter)
